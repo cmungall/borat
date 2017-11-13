@@ -1,12 +1,24 @@
 :- begin_tests(solve).
 
 :- use_module(library(borat)).
+:- use_module(library(borat/utils)).
 
 :- debug(search).
 
-write_kb(kb(Axioms,_,On,Pr)) :-
-        length(Axioms,Len),
-        format('+~w // WORLD=~w // Pr=~w~n',[Len,On,Pr]).
+
+test(basic) :-
+        Init=[
+              ],
+        H=[
+           0.8-subClassOf(c,b)
+          ],
+        search(Init, H, Sols),
+        writeln('*BASIC*'),
+        maplist(write_solution,Sols),
+        Sols=[_,_],
+        % TODO
+        nl.
+
 
 test(subClass) :-
         Init=[
@@ -37,7 +49,7 @@ test(subClass) :-
           ],
         search(Init, H, Sols),
         writeln('*SOLS*'),
-        maplist(write_kb,Sols),
+        maplist(write_solution,Sols),
         member(subClassOf(d2,a),Out),
         member(subClassOf(d,a),Out),
         member(subClassOf(d,b),Out),
@@ -53,32 +65,30 @@ test(conflict) :-
            0.8-subClassOf(x,y)
           ],
         search(Init, H, Sols),
-        writeln('*SOLS*'),
-        maplist(write_kb,Sols),
-        % we expect exactly one solution
-        Sols=[_],
+        writeln('*CONFLICT*'),
+        maplist(write_solution,Sols),
+        % we expect no solutions
+        assertion( Sols=[] ),
         nl.
 
-mk_ax(equivalentTo(X,Y),X,Y).
-mk_ax(subClassOf(X,Y),X,Y).
-
-% TODO: filterout axioms that cannot be true once selected
 test(filter) :-
         Init=[
               subClassOf(b,a),
               subClassOf(c,b),
               % gap
-              subClassOf(d,c),
-              subClassOf(e,d)
+              subClassOf(e,d),
+              subClassOf(f,e)
              ],
         H=[
-           0.99-subClassOf(b,c),
-           0.01-subClassOf(e,a)
+           0.99-subClassOf(d,c),
+           0.05-subClassOf(f,a)
           ],
         search(Init, H, Sols),
         writeln('*FILTER*'),
-        maplist(write_kb,Sols),
+        maplist(write_solution,Sols),
+        assertion( Sols=[_,_,_] ),
         nl.
+
 
 
 :- end_tests(solve).

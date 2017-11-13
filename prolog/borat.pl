@@ -4,21 +4,21 @@
   
 */
 
-/*
-
-  S = sol(A,H,C)
-
-*/
-
 :- module(borat,
           [saturate/2,
            search/3]).
 
 
         
+%! search(+LogicalAxioms:list, +PrAxioms:list, ?CandidateKbs:list) is det
+% 
+% Search solution space for most likely configuration of weighted axioms.
+% 
 search(Axioms,PrAxioms,Sols2) :-
         lsearch([kb(Axioms,PrAxioms,[],1)], Sols, [], 1),
+        !,
         length(Sols,NumSols),
+        maplist(writeln,Sols),
         predsort(compare_kbs,Sols,Sols2),
         debug(search,'Solutions: ~w',[NumSols]).
 
@@ -26,12 +26,14 @@ kb_prob(kb(_,_,_,P),P).
 compare_kbs(Order,Kb1,Kb2) :-
         kb_prob(Kb1,P1),
         kb_prob(Kb2,P2),
-        compare(Order,P2,P1).
+        compare(Order,P2-Kb2,P1-Kb1).
 
-
-lsearch([], TerminalSols, _, Counter) :-
+%! lsearch(+Kbs:list, ?SolvledKbs:list, +Visited:lst, +Counter:int)
+%
+%
+lsearch([], [], _, Counter) :-
         debug(search,'All solutions explored after ~w iterations',[Counter]).
-lsearch([S|_], TerminalSols, _, Counter) :-
+lsearch([S|_], [], _, Counter) :-
         1 is Counter mod 100,
         % todo: this is a weird way of doing prefs
         S=kb(Axioms,_,_,_),
