@@ -77,7 +77,7 @@ adj(S, S2, VList, [Sig2|VList]) :-
         debug(xsearch,'Choosing from ~w',[S]),
         S = kb(Axioms, PrAxioms, PrAxiomsOn, _),
         pr_axioms_ids(PrAxiomsOn, Sig),
-        findall(PA, (choose(PrAxioms,Pr,A,PrAxiomsOn),
+        findall(PA, (choose(PrAxioms,Pr,A,PrAxiomsOn,Axioms),
                      PA = Pr-A,
                      add_axiom(A,Sig,Sig2),
                      \+ member(Sig2, VList)
@@ -98,10 +98,12 @@ add_axiom(A,Sig,Sig2) :-
         axiom_id(A,A_id),
         ord_union([A_id],Sig,Sig2).
 
-choose(PrAxioms,Pr,A,PrAxiomsOn) :-
+choose(PrAxioms,Pr,A,PrAxiomsOn,Axioms) :-
         member(PrPos-PosA,PrAxioms),
         \+member(_-PosA, PrAxiomsOn),
         \+member(_-not(PosA), PrAxiomsOn),
+        \+member(PosA, Axioms),
+        \+member(not(PosA), Axioms),
         (   Pr=PrPos,
             A=PosA
         ;   Pr is 1-PrPos,
