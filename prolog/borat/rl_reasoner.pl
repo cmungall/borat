@@ -1,5 +1,7 @@
 :- module(rl_reasoner,
-          [saturate/2]).
+          [saturate/2,
+           abduce/3,
+           abduce_all/3]).
 
 
 /*
@@ -28,6 +30,19 @@ all_true([],_).
 all_true([A|As],AxiomsIn) :-
         ground_axiom(A,AxiomsIn),    % grounds Fact
         all_true(As,AxiomsIn).
+
+%! abduce(+AxiomsIn:list, +AxiomsNew:list, ?AxiomExplained:list) is nondet
+%
+% finds axioms that are explained by AxiomsNew
+abduce(AxiomsIn, AxiomsNew, AxiomExplained) :-
+        select(AxiomExplained, AxiomsIn, AxiomsRest),
+        \+ member(AxiomExplained, AxiomsNew),
+        append(AxiomsNew, AxiomsRest, AxiomsIn2),
+        saturate(AxiomsIn2, AxiomsOut),
+        member(AxiomExplained, AxiomsOut).
+
+abduce_all(AxiomsIn, AxiomsNew, AxiomsExplained) :-
+        setof(A,abduce(AxiomsIn, AxiomsNew, A),AxiomsExplained).
 
 % todo: other operations; this is the only native one required so far
 ground_axiom(A\=B,_) :- A\=B.
