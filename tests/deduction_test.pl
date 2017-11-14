@@ -1,6 +1,6 @@
 :- begin_tests(borat).
 
-:- use_module(library(borat)).
+:- use_module(library(borat/rl_reasoner)).
 
 :- debug(borat).
 
