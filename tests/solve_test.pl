@@ -20,7 +20,7 @@ test(basic) :-
         % we expect two solutions one, for pos and negative
         assertion( Sols=[_,_] ),
         Sols=[Best,_],
-        assertion( choices(Best,[_-subClassOf(c,b)]) ),
+        assertion( kb_S(Best,[_-subClassOf(c,b)]) ),
         nl.
 
 test(nomerge_simple) :-
@@ -40,7 +40,7 @@ test(nomerge_simple) :-
         assertion( Sols=[Sol] ),
         
         % the equivalence solution is ruled out due to all-unique constraint
-        assertion( choices(Sol,[not(equivalentTo(a1,b1))])).
+        assertion( kb_S(Sol,[not(equivalentTo(a1,b1))])).
 
 test(nomerge_inf) :-
         Init=[
@@ -71,7 +71,7 @@ test(nomerge_inf) :-
         writeln('*NM_INF*'),
         maplist(write_solution,Sols),
         Sols=[Best|_],
-        assertion( (choices(Best, BestAxioms),
+        assertion( (kb_S(Best, BestAxioms),
                     member(_-not(subClassOf(a1,d2)), BestAxioms)) ),
         writeln(Best).
 
