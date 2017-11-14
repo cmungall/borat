@@ -3,7 +3,9 @@
 :- use_module(library(borat)).
 :- use_module(library(borat/utils)).
 
-:- debug(search).
+%:- debug(search).
+
+choices(kb(_,_,L,_),L).
 
 
 test(basic) :-
@@ -15,14 +17,33 @@ test(basic) :-
         search(Init, H, Sols),
         writeln('*BASIC*'),
         maplist(write_solution,Sols),
-        Sols=[_,_],
-        % TODO
+        % we expect two solutions one, for pos and negative
+        assertion( Sols=[_,_] ),
+        Sols=[Best,_],
+        assertion( choices(Best,[_-subClassOf(c,b)]) ),
         nl.
 
-
-test(subClass) :-
+test(nomerge_simple) :-
         Init=[
-              max(300),
+              in(a1,s1),
+              in(b1,s1),
+              all_unique(s1)
+              ],
+        H=[
+           0.99-equivalentTo(a1,b1)
+          ],
+        search(Init, H, Sols),
+        writeln('*NM_SIMPLE*'),
+        maplist(write_solution,Sols),
+        
+        % we expect one solution
+        assertion( Sols=[Sol] ),
+        
+        % the equivalence solution is ruled out due to all-unique constraint
+        assertion( choices(Sol,[not(equivalentTo(a1,b1))])).
+
+test(nomerge_inf) :-
+        Init=[
               in(a1,s1),
               in(b1,s1),
               in(c1,s1),
@@ -44,18 +65,15 @@ test(subClass) :-
            0.7-equivalentTo(a1,a2),
            0.8-equivalentTo(b1,b2),
            0.6-equivalentTo(c1,c2),
-           0.2-disjointWith(a1,a2),
-           0.3-subClassOf(a1,d2)
+           0.9-subClassOf(a1,d2)
           ],
         search(Init, H, Sols),
-        writeln('*SOLS*'),
+        writeln('*NM_INF*'),
         maplist(write_solution,Sols),
-        member(subClassOf(d2,a),Out),
-        member(subClassOf(d,a),Out),
-        member(subClassOf(d,b),Out),
-        member(subClassOf(d,c),Out),
-        member(subClassOf(c,a),Out),
-        member(subClassOf(b,a),Out).
+        Sols=[Best|_],
+        assertion( (choices(Best, BestAxioms),
+                    member(_-not(subClassOf(a1,d2)), BestAxioms)) ),
+        writeln(Best).
 
 test(conflict) :-
         Init=[
@@ -88,6 +106,7 @@ test(filter) :-
         maplist(write_solution,Sols),
         assertion( Sols=[_,_,_] ),
         nl.
+
 
 
 

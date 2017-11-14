@@ -20,7 +20,6 @@ search(Axioms,PrAxioms,Sols2) :-
         lsearch([kb(Axioms,PrAxioms,[],1)], Sols, [], 1),
         !,
         length(Sols,NumSols),
-        maplist(writeln,Sols),
         predsort(compare_kbs,Sols,Sols2),
         debug(search,'Solutions: ~w',[NumSols]).
 
