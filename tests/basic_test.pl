@@ -40,5 +40,5 @@ test(basic6) :-
         nl.
 
 
-:- end_tests(solve).
+:- end_tests(basic).
     

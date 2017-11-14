@@ -16,7 +16,6 @@ mk_ax(subClassOf(X,Y),X,Y).
 
 simrun(N, Len) :-
         Init=[
-              max(1000)
              ],
         setof(X,between(1,N,X),Cs),
         findall(P-Ax,
@@ -26,7 +25,7 @@ simrun(N, Len) :-
                     random(P)),
                 H),
         nodebug(search),
-        search(Init, H, Sols),
+        search(Init, H, Sols, [max(1000)]),
         length(Sols, Len),
         Sols=[Sol|_],
         kb_prob(Sol,Pr),
