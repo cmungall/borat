@@ -94,7 +94,6 @@ lsearch([S|SRest], [S|TerminalSols], VList, Counter, Opts) :-
         % no further choices - terminal node, add to candidate solutions stack
         kb_H(S,PrAxioms),
         kb_S(S,PrAxiomsOn),
-        %S = kb(_, PrAxioms, PrAxiomsOn, _,_),
         debug(xsearch,'Testing for terminal ~w len= ~w',[PrAxioms,PrAxiomsOn]),
         length(PrAxioms,Len),
         length(PrAxiomsOn,Len),

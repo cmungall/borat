@@ -2,7 +2,7 @@
           [write_solution/1]
          ).
 
-%! write_kb(+Kb)
+%! write_solution(+Kb)
 %
 % 
 write_solution(kb(Axioms,_,On,Pr,_)) :-

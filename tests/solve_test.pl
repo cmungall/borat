@@ -5,9 +5,6 @@
 
 %:- debug(search).
 
-choices(kb(_,_,L,_,_),L).
-
-
 test(basic) :-
         Init=[
               ],
@@ -37,10 +34,11 @@ test(nomerge_simple) :-
         maplist(write_solution,Sols),
         
         % we expect one solution
-        assertion( Sols=[Sol] ),
+        assertion( Sols=[_] ),
+        Sols=[Sol],
         
         % the equivalence solution is ruled out due to all-unique constraint
-        assertion( kb_S(Sol,[not(equivalentTo(a1,b1))])).
+        assertion( kb_S(Sol,[_-not(equivalentTo(a1,b1))])).
 
 test(nomerge_inf) :-
         Init=[
