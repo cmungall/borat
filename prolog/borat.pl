@@ -23,7 +23,7 @@
 %! kb_A(+Kb,?LogicalAxioms:list) is det
 %
 % all logical axioms in KB
-kb_A(kb(X,_,_,_),X).
+kb_A(kb(X,_,_,_,_),X).
 
 %! kb_H(+Kb,?PrAxiomPairs:list) is det
 %
@@ -72,7 +72,7 @@ compare_kbs(Order,Kb1,Kb2) :-
 lsearch([], [], _, Counter, _Opts) :-
         % BASE CASE 1
         debug(search,'All solutions explored after ~w iterations',[Counter]).
-lsearch([S|_], [], _, Counter, Opts) :-
+lsearch([_S|_], [], _, Counter, Opts) :-
         % BASE CASE 2
         1 is Counter mod 100,
 
