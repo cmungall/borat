@@ -141,7 +141,7 @@ adj(S, S2, VList, [Sig2|VList]) :-
         %calc_prob(AxiomsInf, PrAxiomsOn2, Prob),
         S2 = kb(AxiomsInf, PrAxioms, PrAxiomsOn2, Prob, OrigAxioms),
         % this grounds Prob
-        calc_kb_prob(S2),
+        calc_kb_prob(S2, Opts),
         debug(xsearch,'PROB = ~w',[Prob]).
 
 
@@ -162,13 +162,13 @@ choose(PrAxioms,Pr,A,PrAxiomsOn,Axioms) :-
             A=not(PosA)).
 
 % calculates prob and unifies free variable
-calc_kb_prob(S) :-
+calc_kb_prob(S, _Opts) :-
         kb_A(S,Axioms),
         % Pr=0 if ontology is incoherent
         member(unsat(_), Axioms),
         kb_P(S,0),
         !.
-calc_kb_prob(S) :-
+calc_kb_prob(S, _Opts) :-
         kb_S(S,PrAxiomsOn),
         % product of all probabilities
         aproduct(PrAxiomsOn, 1, Prob),
