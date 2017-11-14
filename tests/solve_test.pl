@@ -5,7 +5,7 @@
 
 %:- debug(search).
 
-choices(kb(_,_,L,_),L).
+choices(kb(_,_,L,_,_),L).
 
 
 test(basic) :-

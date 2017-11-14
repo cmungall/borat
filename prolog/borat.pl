@@ -28,17 +28,22 @@ kb_A(kb(X,_,_,_),X).
 %! kb_H(+Kb,?PrAxiomPairs:list) is det
 %
 % list of pairs of Pr-Axiom from set of  hypothetical axioms
-kb_H(kb(_,X,_,_),X).
+kb_H(kb(_,X,_,_,_),X).
 
 %! kb_S(+Kb,?AxiomsInSolution:list) is det
 %
 % all axioms selected as true in current solution
-kb_S(kb(_,_,X,_),X).
+kb_S(kb(_,_,X,_,_),X).
 
-%! kb_P(+Kb,?LogicalAxioms:list) is det
+%! kb_P(+Kb,?Prob:number) is det
 %
 % probability of KB
-kb_P(kb(_,_,_,X),X).
+kb_P(kb(_,_,_,X,_),X).
+
+%! kb_A_orig(+Kb,?LogicalAxioms:list) is det
+%
+% original/seed set of axioms
+kb_A_orig(kb(_,_,_,_,X),X).
 
         
 %! search(+LogicalAxioms:list, +PrAxioms:list, ?CandidateKbs:list) is det
@@ -49,7 +54,7 @@ kb_P(kb(_,_,_,X),X).
 search(Axioms,PrAxioms,Sols2) :-
         search(Axioms,PrAxioms,Sols2,[]).
 search(Axioms,PrAxioms,Sols2,Opts) :-
-        lsearch([kb(Axioms,PrAxioms,[],1)], Sols, [], 1, Opts),
+        lsearch([kb(Axioms,PrAxioms,[],1,Axioms)], Sols, [], 1, Opts),
         !,
         length(Sols,NumSols),
         predsort(compare_kbs,Sols,Sols2),
@@ -80,14 +85,16 @@ lsearch([S|Sols], TerminalSols, VList, Counter, Opts) :-
         % DEAD-END
         % A zero-probability solution is not explored further
         % and not added to the list of candidate solutions
-        S = kb(_, _, _, Prob),
+        kb_P(S,Prob),
         Prob = 0,
         !,
         lsearch(Sols, TerminalSols, VList, Counter, Opts).
 
 lsearch([S|SRest], [S|TerminalSols], VList, Counter, Opts) :-
         % no further choices - terminal node, add to candidate solutions stack
-        S = kb(_, PrAxioms, PrAxiomsOn, _),
+        kb_H(S,PrAxioms),
+        kb_S(S,PrAxiomsOn),
+        %S = kb(_, PrAxioms, PrAxiomsOn, _,_),
         debug(xsearch,'Testing for terminal ~w len= ~w',[PrAxioms,PrAxiomsOn]),
         length(PrAxioms,Len),
         length(PrAxiomsOn,Len),
@@ -116,7 +123,7 @@ lsearch([_|Sols], TerminalSols, VList, Counter, Opts) :-
 % currently just selects next-most probable independent of adjacency
 adj(S, S2, VList, [Sig2|VList]) :-
         debug(xsearch,'Choosing from ~w',[S]),
-        S = kb(Axioms, PrAxioms, PrAxiomsOn, _),
+        S = kb(Axioms, PrAxioms, PrAxiomsOn, _, OrigAxioms),
         pr_axioms_ids(PrAxiomsOn, Sig),
         findall(PA, (choose(PrAxioms,Pr,A,PrAxiomsOn,Axioms),
                      PA = Pr-A,
@@ -133,7 +140,7 @@ adj(S, S2, VList, [Sig2|VList]) :-
         add_axiom(A,Sig,Sig2),
         debug(search,'EXT = ~w + ~w ==> ~w',[A,Sig,Sig2]),
         calc_prob(AxiomsInf, PrAxiomsOn2, Prob),
-        S2 = kb(AxiomsInf, PrAxioms, PrAxiomsOn2, Prob).
+        S2 = kb(AxiomsInf, PrAxioms, PrAxiomsOn2, Prob, OrigAxioms).
 
 %! choose(+PrAxioms:list, ?Pr, ?A, +PrAxiomsOn:list, +Axioms:list) is nondet
 %

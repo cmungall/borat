@@ -5,6 +5,6 @@
 %! write_kb(+Kb)
 %
 % 
-write_solution(kb(Axioms,_,On,Pr)) :-
+write_solution(kb(Axioms,_,On,Pr,_)) :-
         length(Axioms,Len),
         format('+~w // WORLD=~w // Pr=~w~n',[Len,On,Pr]).
