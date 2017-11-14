@@ -138,8 +138,13 @@ adj(S, S2, VList, [Sig2|VList]) :-
         PrAxiomsOn2 = [Pr-A|PrAxiomsOn],
         add_axiom(A,Sig,Sig2),
         debug(search,'EXT = ~w + ~w ==> ~w',[A,Sig,Sig2]),
-        calc_prob(AxiomsInf, PrAxiomsOn2, Prob),
-        S2 = kb(AxiomsInf, PrAxioms, PrAxiomsOn2, Prob, OrigAxioms).
+        %calc_prob(AxiomsInf, PrAxiomsOn2, Prob),
+        S2 = kb(AxiomsInf, PrAxioms, PrAxiomsOn2, Prob, OrigAxioms),
+        % this grounds Prob
+        calc_kb_prob(S2),
+        debug(xsearch,'PROB = ~w',[Prob]).
+
+
 
 %! choose(+PrAxioms:list, ?Pr, ?A, +PrAxiomsOn:list, +Axioms:list) is nondet
 %
@@ -156,6 +161,20 @@ choose(PrAxioms,Pr,A,PrAxiomsOn,Axioms) :-
         ;   Pr is 1-PrPos,
             A=not(PosA)).
 
+% calculates prob and unifies free variable
+calc_kb_prob(S) :-
+        kb_A(S,Axioms),
+        % Pr=0 if ontology is incoherent
+        member(unsat(_), Axioms),
+        kb_P(S,0),
+        !.
+calc_kb_prob(S) :-
+        kb_S(S,PrAxiomsOn),
+        % product of all probabilities
+        aproduct(PrAxiomsOn, 1, Prob),
+        kb_P(S,Prob),
+        !.
+
 % for signature
 add_axiom(A,Sig,Sig2) :-
         axiom_id(A,A_id),
@@ -170,14 +189,6 @@ axiom_id(A,Id) :-  gensym(a,Id),assert(axiom_id_fact(A,Id)),!.
 pr_axioms_ids(PrAxioms,Ids) :- setof(Id,Pr^A^(member(Pr-A,PrAxioms),axiom_id(A,Id)),Ids),!.
 pr_axioms_ids(_,[]).
 
-calc_prob(Axioms, _, 0) :-
-        % Pr=0 if ontology is incoherent
-        member(unsat(_), Axioms),
-        !.
-calc_prob(_, PrAxioms, Prob) :-
-        % product of all probabilities
-        aproduct(PrAxioms, 1, Prob),
-        !.
 
 aproduct([],P,P).
 aproduct([Pr-_|L],P1,POut) :-
