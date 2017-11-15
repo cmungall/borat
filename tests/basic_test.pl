@@ -39,26 +39,6 @@ test(basic6) :-
         % TODO
         nl.
 
-:- debug(xsearch).
-
-xxxtest(basicX) :-
-        Init=[
-              subClassOf(a,b),
-              subClassOf(b,c),
-              subClassOf(a2,b2),
-              subClassOf(b2,c2)
-              ],
-        H=[
-           0.25-equivalentTo(b,b2)
-          ],
-        search(Init, H, Sols),
-        writeln('*BASIC8*'),
-        length(Sols,Len),
-        maplist(write_solution,Sols),
-        assertion( Len = 7 ),
-%        \+ (member(S,
-        % TODO
-        nl.
                     
 
 :- end_tests(basic).
