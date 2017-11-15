@@ -4,7 +4,7 @@
 :- use_module(library(borat/utils)).
 :- use_module(library(borat/kboom)).
 
-:- debug(extract).
+%:- debug(extract).
 
 links2axioms(L,A) :-
         findall(subClassOf(X,Y),member(X-Y,L),A).
@@ -74,6 +74,45 @@ test(extract_H) :-
         assertion( ModAxioms4 = [_-subClassOf(b,c),_,_,_,_] ),
         nl.
 
+
+test(disjoint) :-
+        Links=[
+               a-b,
+               b-c,
+               c-d,
+               d-e,
+               m-n,
+               n-o,
+               o-p
+              ],
+        links2axioms(Links,Axioms1),
+        append(Axioms1,
+               [disjointWith(a,m),
+                disjointWith(b,n)],
+               Axioms),
+        
+        writeln('**D/a**'),
+        extract_module([a],Axioms,ModAxioms),
+        maplist(writeln,ModAxioms),
+        assertion( ModAxioms = [subClassOf(a,b),_,_,_] ),
+        assertion( \+ member(disjointWith(_,_), ModAxioms) ),
+        
+        writeln('**D/m**'),
+        extract_module([m],Axioms,ModAxioms2),
+        maplist(writeln,ModAxioms2),
+        assertion( ModAxioms2 = [subClassOf(m,n),_,_] ),
+
+        writeln('**D/ab**'),
+        extract_module([a,b],Axioms,ModAxioms3),
+        maplist(writeln,ModAxioms3),
+        assertion( ModAxioms3 = [subClassOf(a,b),_,_,_] ),
+
+        writeln('**D/bn**'),
+        extract_module([b,n],Axioms,ModAxioms4),
+        maplist(writeln,ModAxioms4),
+        assertion( ModAxioms4 = [subClassOf(b,c),_,_,_,_,_] ),
+        assertion( member(disjointWith(b,n), ModAxioms4) ),
+        nl.
 
 :- end_tests(extract).
     
