@@ -50,6 +50,13 @@ abduce_all(AxiomsIn, AxiomsNew, AxiomsExplained) :-
 ground_axiom(A\=B,_) :- A\=B.
 ground_axiom(A,AxiomsIn) :- member(A,AxiomsIn).
 
+/*
+
+  RULES
+
+  TODO: make these extensible
+
+*/
 
 rule(subClassOf(A,B),[subClassOf(A,Z),subClassOf(Z,B)]). % trans
 rule(subClassOf(A,B),[equivalentTo(A,B)]).
@@ -61,6 +68,11 @@ rule(equivalentTo(A,B),[equivalentTo(A,Z),equivalentTo(Z,B)]). % trans
 rule(unsat(A),[subClassOf(A,B),subClassOf(A,C),disjointWith(B,C)]).
 rule(unsat(A),[equivalentTo(A,B),in(A,S),in(B,S),A\=B,all_unique(S)]).
 rule(unsat(Ax),[not(Ax),Ax]).
+
+% note that we do not infer properSubClassOf
+% used for initial assertions only
+rule(subClassOf(A,B),[properSubClassOf(A,B)]).
+rule(unsat(A),[properClassOf(A,B),equivalentTo(A,B)]).
 
 
 

@@ -25,7 +25,18 @@ AtomicAxiom ::= "equivalentTo(" Cls "," Cls ")"
 
 See [tests](tests) folder for now
 
-Currently no hookup to OWL - specify initial knowledge base as prolog terms
+## RDF Encoding
+
+A probabilistic ontology can be encoded in either of two ways:
+
+ * Using q-quads or trig, and adding a triple indicating probability of named graph
+ * Using OWL reification
+
+Non-weighted logical axioms are encoded in the usual way; any axiom
+that does not conform to either of the above criteria is treated as
+`Pr=1`.
+
+See [tests/data/simple.trig](tests/data/simple.trig)
 
 ## History
 
@@ -34,7 +45,6 @@ See https://github.com/monarch-initiative/kboom
 ## TODO
 
  * add CLI
- * add bridge to OWL
  * kboom subset
  * add abduction hooks
  * dot export

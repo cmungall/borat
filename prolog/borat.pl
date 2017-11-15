@@ -7,6 +7,8 @@
 :- module(borat,
           [search/3,
            search/4,
+           kb_search/2,
+           kb_search/3,
 
            kb_A/2,
            kb_H/2,
@@ -55,6 +57,10 @@ kb_A_orig(kb(_,_,_,_,X),X).
 % PrAxioms = [Pr1-Axiom1, Pr2-Axiom2, ...]
 search(Axioms,PrAxioms,Sols2) :-
         search(Axioms,PrAxioms,Sols2,[]).
+search(Axioms,PrAxioms,Sols,Opts) :-
+        process_opts(Axioms,PrAxioms,Opts,Axioms2,PrAxioms2,Opts2),
+        !,
+        search(Axioms2,PrAxioms2,Sols,Opts2).
 search(Axioms,PrAxioms,Sols2,Opts) :-
         lsearch([kb(Axioms,PrAxioms,[],1,Axioms)], Sols, [], 1, Opts),
         !,
@@ -62,10 +68,28 @@ search(Axioms,PrAxioms,Sols2,Opts) :-
         predsort(compare_kbs,Sols,Sols2),
         debug(search,'Solutions: ~w',[NumSols]).
 
+kb_search(Kb,Sols2) :-
+        kb_search(Kb,Sols2,[]).
+kb_search(Kb,Sols2,Opts) :-
+        kb_A(Kb,Axioms),
+        kb_H(Kb,PrAxioms),
+        search(Axioms,PrAxioms,Sols2,Opts).
+
 compare_kbs(Order,Kb1,Kb2) :-
         kb_P(Kb1,P1),
         kb_P(Kb2,P2),
         compare(Order,P2-Kb2,P1-Kb1).
+
+% succeeds if an option can be processed, creating
+% a new A/H set
+
+process_opts(Axioms,PrAxioms,Opts,Axioms2,PrAxioms,Opts2) :-
+        % local unique name assumption
+        select(una(local),Opts,Opts2),
+        setof(all_unique(Src),C^member(in(C,Src),Axioms),NewAxioms),
+        !,
+        append(Axioms,NewAxioms,Axioms2).
+
 
 %! lsearch(+KbStack:list, ?SolvledKbs:list, +Visited:list, +Counter:int) is det
 %
@@ -87,8 +111,8 @@ lsearch([S|Sols], TerminalSols, VList, Counter, Opts) :-
         % DEAD-END
         % A zero-probability solution is not explored further
         % and not added to the list of candidate solutions
-        kb_P(S,Prob),
-        Prob = 0,
+        debug(xsearch,'ZERO-PROB DEAD-END: ~w',[S]),
+        kb_P(S,0),
         !,
         lsearch(Sols, TerminalSols, VList, Counter, Opts).
 
@@ -169,8 +193,11 @@ calc_kb_prob(S, _A, _Opts) :-
         kb_A(S,Axioms),
         % Pr=0 if ontology is incoherent
         member(unsat(_), Axioms),
+        debug(xsearch,'UNSAT = ~w',[Axioms]),
         kb_P(S,0),
         !.
+
+
 calc_kb_prob(S, NextAxiom , Opts) :-
         kb_S(S,PrAxiomsOn),
         % product of all probabilities

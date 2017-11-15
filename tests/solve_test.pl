@@ -65,7 +65,7 @@ test(nomerge_inf) :-
            0.6-equivalentTo(c1,c2),
            0.9-subClassOf(a1,d2)
           ],
-        search(Init, H, Sols,[use_explain(false)]),
+        search(Init, H, Sols),
         writeln('*NM_INF*'),
         maplist(write_solution,Sols),
         Sols=[Best|_],
