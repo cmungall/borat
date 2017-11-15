@@ -30,6 +30,8 @@ kb_A(kb(X,_,_,_,_),X).
 % list of pairs of Pr-Axiom from set of  hypothetical axioms
 kb_H(kb(_,X,_,_,_),X).
 
+kb_H_axioms(S,X) :- kb_H(S,H),findall(A,member(_-A,H),X).
+
 %! kb_S(+Kb,?AxiomsInSolution:list) is det
 %
 % all axioms selected as true in current solution
@@ -105,7 +107,7 @@ lsearch([S|Sols], TerminalSols, VList, Counter, Opts) :-
         % non-terminal: extend node
 
         % get adjacent solution
-        adj(S, S2, VList, VList2),
+        adj(S, S2, VList, VList2, Opts),
         !,
 
         % depth-first
@@ -115,12 +117,12 @@ lsearch([S|Sols], TerminalSols, VList, Counter, Opts) :-
 lsearch([_|Sols], TerminalSols, VList, Counter, Opts) :-
         lsearch(Sols, TerminalSols, VList, Counter, Opts).
 
-%% adj(+Kb, ?Kb, +VList:list, ?VlistUpdated) is semidet
+%% adj(+Kb, ?NextKb, +VList:list, ?VlistUpdated) is semidet
 %
 % find adjacent/next node
 %
 % currently just selects next-most probable independent of adjacency
-adj(S, S2, VList, [Sig2|VList]) :-
+adj(S, S2, VList, [Sig2|VList], Opts) :-
         debug(xsearch,'Choosing from ~w',[S]),
         S = kb(Axioms, PrAxioms, PrAxiomsOn, _, OrigAxioms),
         pr_axioms_ids(PrAxiomsOn, Sig),
@@ -132,16 +134,15 @@ adj(S, S2, VList, [Sig2|VList]) :-
                 PAs),
         PAs\=[],
         !,
-        debug(xsearch,'Coices = ~w',[PAs]),
+        debug(xsearch,'Choices = ~w',[PAs]),
         reverse(PAs,[Pr-A|_]),
         saturate([A|Axioms], AxiomsInf),
         PrAxiomsOn2 = [Pr-A|PrAxiomsOn],
         add_axiom(A,Sig,Sig2),
         debug(search,'EXT = ~w + ~w ==> ~w',[A,Sig,Sig2]),
-        %calc_prob(AxiomsInf, PrAxiomsOn2, Prob),
         S2 = kb(AxiomsInf, PrAxioms, PrAxiomsOn2, Prob, OrigAxioms),
         % this grounds Prob
-        calc_kb_prob(S2, Opts),
+        calc_kb_prob(S2, A, Opts),
         debug(xsearch,'PROB = ~w',[Prob]).
 
 
@@ -161,21 +162,54 @@ choose(PrAxioms,Pr,A,PrAxiomsOn,Axioms) :-
         ;   Pr is 1-PrPos,
             A=not(PosA)).
 
+%! calc_kb_prob(+Kb, +NextAxiom, +Opts:list) is det
+%! 
 % calculates prob and unifies free variable
-calc_kb_prob(S, _Opts) :-
+calc_kb_prob(S, _A, _Opts) :-
         kb_A(S,Axioms),
         % Pr=0 if ontology is incoherent
         member(unsat(_), Axioms),
         kb_P(S,0),
         !.
-calc_kb_prob(S, _Opts) :-
+calc_kb_prob(S, NextAxiom , Opts) :-
         kb_S(S,PrAxiomsOn),
         % product of all probabilities
-        aproduct(PrAxiomsOn, 1, Prob),
+        aproduct(PrAxiomsOn, 1, ProbProduct),
+        explanatory_power(S, NextAxiom,Opts,Power),
+        % Crude: noisy-OR of two possible outcomes
+        % todo: this should be conditioned on the priors of supporting axioms
+        Prob is 1-( (1/(2**Power)) * (1-ProbProduct) ),
         kb_P(S,Prob),
         !.
 
-% for signature
+%! explanatory_power(+Kb, +NextAxiom, +Opts:list, ?Power:int) is det
+%
+% calculate explanatory power of an axiom
+% see explain_test for example.
+explanatory_power(_, _, Opts, 0) :-
+        \+ member(use_explain(true),Opts),
+        !.
+explanatory_power(S, NextAxiom, _Opts, Power) :-
+        NextAxiom\=in(_),
+        NextAxiom\=not(_),
+        kb_A_orig(S,OrigAxioms),
+        kb_H_axioms(S,OnAxioms),
+        select(NextAxiom, OnAxioms, OnAxiomsWithout),
+        append(OrigAxioms,OnAxiomsWithout,BaseAxioms),
+        setof(EA,get_expl(BaseAxioms, NextAxiom, EA),EAs),
+        !,
+        length(EAs,Power).
+explanatory_power(_S, _NextAxiom, _Opts, 0).
+
+% TODO: consider backwards chaining
+get_expl(Axioms,NewA,EA) :-
+        select(EA,Axioms,Axioms2),
+        saturate(Axioms2,AxiomsInfWithout),
+        \+ member(EA,AxiomsInfWithout),
+        saturate([NewA|AxiomsInfWithout],AxiomsInf),
+        member(EA,AxiomsInf).
+
+% adds an axiom to an axiom signature
 add_axiom(A,Sig,Sig2) :-
         axiom_id(A,A_id),
         ord_union([A_id],Sig,Sig2).
@@ -188,7 +222,6 @@ axiom_id(A,Id) :-  gensym(a,Id),assert(axiom_id_fact(A,Id)),!.
 % todo - use bitwise ops
 pr_axioms_ids(PrAxioms,Ids) :- setof(Id,Pr^A^(member(Pr-A,PrAxioms),axiom_id(A,Id)),Ids),!.
 pr_axioms_ids(_,[]).
-
 
 aproduct([],P,P).
 aproduct([Pr-_|L],P1,POut) :-

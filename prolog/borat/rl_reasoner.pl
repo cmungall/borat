@@ -44,6 +44,8 @@ abduce(AxiomsIn, AxiomsNew, AxiomExplained) :-
 abduce_all(AxiomsIn, AxiomsNew, AxiomsExplained) :-
         setof(A,abduce(AxiomsIn, AxiomsNew, A),AxiomsExplained).
 
+
+
 % todo: other operations; this is the only native one required so far
 ground_axiom(A\=B,_) :- A\=B.
 ground_axiom(A,AxiomsIn) :- member(A,AxiomsIn).
