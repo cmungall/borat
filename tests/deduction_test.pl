@@ -1,4 +1,4 @@
-:- begin_tests(borat).
+:- begin_tests(deduction).
 
 :- use_module(library(borat/rl_reasoner)).
 
@@ -92,5 +92,5 @@ test(noshare) :-
         member(unsat(d2),Out).
 
     
-:- end_tests(borat).
+:- end_tests(deduction).
     

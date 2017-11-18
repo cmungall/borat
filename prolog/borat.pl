@@ -31,8 +31,13 @@ kb_A(kb(X,_,_,_,_),X).
 %
 % list of pairs of Pr-Axiom from set of  hypothetical axioms
 kb_H(kb(_,X,_,_,_),X).
-
 kb_H_axioms(S,X) :- kb_H(S,H),findall(A,member(_-A,H),X).
+
+kb_set_H(Kb,H,Kb2) :-
+        Kb =.. [F,A,_|Args],
+        Kb2 =.. [F,A,H|Args].
+
+
 
 %! kb_S(+Kb,?AxiomsInSolution:list) is det
 %
@@ -62,7 +67,9 @@ search(Axioms,PrAxioms,Sols,Opts) :-
         !,
         search(Axioms2,PrAxioms2,Sols,Opts2).
 search(Axioms,PrAxioms,Sols2,Opts) :-
-        lsearch([kb(Axioms,PrAxioms,[],1,Axioms)], Sols, [], 1, Opts),
+        Kb=kb(Axioms,PrAxioms,[],1,Axioms),
+        preprocess_weights(Kb,Kb2,Opts),
+        lsearch([Kb2], Sols, [], 1, Opts),
         !,
         length(Sols,NumSols),
         predsort(compare_kbs,Sols,Sols2),
@@ -90,6 +97,41 @@ process_opts(Axioms,PrAxioms,Opts,Axioms2,PrAxioms,Opts2) :-
         !,
         append(Axioms,NewAxioms,Axioms2).
 
+%! preprocess_weights(+Kb,?Kb2,+Opts:list) is det
+%
+% input weighted axiom can either be Prob-Axiom or w(Weight)-Axiom
+%
+% here we normalize to probabilities, after first
+% summing weights for the same axiom
+preprocess_weights(Kb, Kb2, _Opts) :-
+        kb_H(Kb,H),
+        maplist(prob_to_weight,H,H2),
+        sumweights(H2,H3),
+        maplist(weight_to_prob,H3,H4),
+        kb_set_H(Kb,H4,Kb2).
+
+% PAs can include the same axiom with multiple weights
+% PAs2 is guaranteed to have unique axioms with weights for same axiom summed
+sumweights(PAs,PAs2) :-
+        findall(w(SumW)-A,
+                aggregate(sum(W),member(w(W)-A, PAs),SumW),
+                PAs2).
+
+% logit
+prob_to_weight(PA, PA) :-
+        % already a weight
+        PA=w(_)-_,
+        !.
+prob_to_weight(P-A, w(W)-A) :-
+        W is log(P/(1-P))/log(2),
+        !.
+
+% inverse logit
+weight_to_prob(w(W)-A, P-A) :-
+        !,
+        P is 1/(1+2**(-W)).
+weight_to_prob(PA,PA).
+        
 
 %! lsearch(+KbStack:list, ?SolvledKbs:list, +Visited:list, +Counter:int) is det
 %
