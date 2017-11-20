@@ -9,6 +9,8 @@
            search/4,
            kb_search/2,
            kb_search/3,
+           pquery/4,
+           pquery/5,
 
            kb_A/2,
            kb_H/2,
@@ -54,7 +56,75 @@ kb_P(kb(_,_,_,X,_),X).
 % original/seed set of axioms
 kb_A_orig(kb(_,_,_,_,X),X).
 
-        
+%! pquery(+Query:term, +Axioms:list, +PrAxioms:list, ?QueryProb:number, +Opts:list) is det
+%
+% finds the probability a query is true given a knowledge base of logical axioms (Axioms, aka A)
+% and hypothetical axioms (PrAxioms, aka H), specified as Weight-Axiom or Prob-Axiom pairs
+%
+% Query is any boolean conjunction of axioms specified using standard prolog constructs (','/2, ';'/2).
+%
+% the space of possible consistent worlds is explored, 
+pquery(Q,Axioms,PrAxioms,QueryProb,Opts) :-
+        search(Axioms,PrAxioms,Sols,Opts),
+        findall(QResult,
+                (   member(Kb,Sols),
+                    debug(query,'  World = ~w',[Kb]),
+                    kb_satisfies_query(Q,Kb,QResult)),
+                QResults),
+        debug(xquery,'QueryResults=~w',[QResults]),
+        QResults1 = [true-0, false-0 | QResults],
+        aggregate(sum(P), member(true-P, QResults1), PrTrue),
+        aggregate(sum(P), member(false-P, QResults1), PrFalse),
+        debug(xquery,'Sum(PT)=~w Sum(PF)=~w',[PrTrue,PrFalse]),
+        QueryProb is PrTrue / (PrFalse+PrTrue).
+
+pquery(Q,Axioms,PrAxioms,QueryProb) :-
+        pquery(Q,Axioms,PrAxioms,QueryProb,[]).
+
+%! kb_satisfies_query(+Q,+Kb,?Result) is nondet
+%
+% Result = IsTrue-Prob
+%
+% nondet - unifies with two results, one for each value of IsTrue
+kb_satisfies_query(Q,_,_) :-
+        var(Q),
+        throw(query_cannot_be_var(Q)).
+kb_satisfies_query((X,Y),Kb,True-Pr) :-
+        !,
+        kb_satisfies_query(X,Kb,True1-Pr),
+        kb_satisfies_query(Y,Kb,True2-Pr),
+        eval_and(True1,True2,True).
+kb_satisfies_query((X;Y),Kb,True-Pr) :-
+        !,
+        kb_satisfies_query(X,Kb,True1-Pr),
+        kb_satisfies_query(Y,Kb,True2-Pr),
+        eval_or(True1,True2,True).
+kb_satisfies_query(not(Q),Kb,True-Pr) :-
+        !,
+        kb_satisfies_query(Q,Kb,PosTrue-Pr),
+        eval_not(PosTrue,True).
+kb_satisfies_query(\+(Q),Kb,Result) :-
+        !,
+        kb_satisfies_query(not(Q),Kb,Result).
+kb_satisfies_query(Q,Kb,True-Pr) :-
+        kb_A(Kb,A),
+        kb_P(Kb,Pr),
+        debug(query,' Pr(~q)=~w',[A,Pr]),
+        (   member(Q,A)
+        ->  True=true
+        ;   True=false).
+
+eval_not(true,false).
+eval_not(false,true).
+
+eval_and(true,true,true) :- !.
+eval_and(_,_,false) :- !.
+
+eval_or(false,false,false) :- !.
+eval_or(_,_,true) :- !.
+
+
+
 %! search(+LogicalAxioms:list, +PrAxioms:list, ?CandidateKbs:list) is det
 % 
 % Search solution space for most likely configuration of weighted axioms.
